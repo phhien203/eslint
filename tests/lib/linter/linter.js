@@ -6245,7 +6245,7 @@ describe("Linter with FlatConfigArray", () => {
 
     describe("verify()", () => {
 
-        it("rule should run as warning when set to 1", () => {
+        it("rule should run as warning when set to 1 with a config array", () => {
             const ruleId = "semi",
                 configs = createFlatConfigArray({
                     files: ["**/*.js"],
@@ -6256,6 +6256,36 @@ describe("Linter with FlatConfigArray", () => {
 
             configs.normalizeSync();
             const messages = linter.verify("foo", configs, filename, true);
+
+            assert.strictEqual(messages.length, 1, "Message length is wrong");
+            assert.strictEqual(messages[0].ruleId, ruleId);
+        });
+
+        it("rule should run as warning when set to 1 with a plain array", () => {
+            const ruleId = "semi",
+                configs = [{
+                    files: ["**/*.js"],
+                    rules: {
+                        [ruleId]: 1
+                    }
+                }];
+
+            const messages = linter.verify("foo", configs, filename, true);
+
+            assert.strictEqual(messages.length, 1, "Message length is wrong");
+            assert.strictEqual(messages[0].ruleId, ruleId);
+        });
+
+        it("rule should run as warning when set to 1 with an object", () => {
+            const ruleId = "semi",
+                config = {
+                    files: ["**/*.js"],
+                    rules: {
+                        [ruleId]: 1
+                    }
+                };
+
+            const messages = linter.verify("foo", config, filename, true);
 
             assert.strictEqual(messages.length, 1, "Message length is wrong");
             assert.strictEqual(messages[0].ruleId, ruleId);
