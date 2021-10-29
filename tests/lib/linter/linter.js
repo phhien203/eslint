@@ -6285,7 +6285,8 @@ describe("Linter with FlatConfigArray", () => {
             it("should error when accessing a global that isn't available in ecmaVersion 5", () => {
                 const messages = linter.verify("new Map()", {
                     languageOptions: {
-                        ecmaVersion: 5
+                        ecmaVersion: 5,
+                        sourceType: "script"
                     },
                     rules: {
                         "no-undef": "error"
@@ -6299,7 +6300,8 @@ describe("Linter with FlatConfigArray", () => {
             it("should error when accessing a global that isn't available in ecmaVersion 3", () => {
                 const messages = linter.verify("JSON.stringify({})", {
                     languageOptions: {
-                        ecmaVersion: 3
+                        ecmaVersion: 3,
+                        sourceType: "script"
                     },
                     rules: {
                         "no-undef": "error"
@@ -6350,6 +6352,27 @@ describe("Linter with FlatConfigArray", () => {
                     },
                     languageOptions: {
                         ecmaVersion: 6
+                    },
+                    rules: { "test/checker": "error" }
+                };
+
+                linter.verify("foo", config, filename);
+            });
+
+            it("ecmaVersion should be normalized to to latest year by default", () => {
+                const config = {
+                    plugins: {
+                        test: {
+                            rules: {
+                                checker(context) {
+                                    return {
+                                        Program() {
+                                            assert.strictEqual(context.languageOptions.ecmaVersion, espree.latestEcmaVersion + 2009);
+                                        }
+                                    };
+                                }
+                            }
+                        }
                     },
                     rules: { "test/checker": "error" }
                 };
@@ -6409,6 +6432,49 @@ describe("Linter with FlatConfigArray", () => {
         });
 
         describe("sourceType", () => {
+
+            it("should be module by default", () => {
+                const config = {
+                    plugins: {
+                        test: {
+                            rules: {
+                                checker(context) {
+                                    return {
+                                        Program() {
+                                            assert.strictEqual(context.languageOptions.sourceType, "module");
+                                        }
+                                    };
+                                }
+                            }
+                        }
+                    },
+                    rules: { "test/checker": "error" }
+                };
+
+                linter.verify("import foo from 'bar'", config, filename);
+            });
+
+            it("should default to commonjs when passed a .cjs filename", () => {
+                const config = {
+                    plugins: {
+                        test: {
+                            rules: {
+                                checker(context) {
+                                    return {
+                                        Program() {
+                                            assert.strictEqual(context.languageOptions.sourceType, "commonjs");
+                                        }
+                                    };
+                                }
+                            }
+                        }
+                    },
+                    rules: { "test/checker": "error" }
+                };
+
+                linter.verify("import foo from 'bar'", config, `${filename}.cjs`);
+            });
+
 
             it("should error when import is used in a script", () => {
                 const messages = linter.verify("import foo from 'bar';", {
@@ -7440,6 +7506,7 @@ describe("Linter with FlatConfigArray", () => {
             });
 
             describe("context.markVariableAsUsed()", () => {
+
                 it("should mark variables in current scope as used", () => {
                     const code = "var a = 1, b = 2;";
                     let spy;
@@ -7462,6 +7529,9 @@ describe("Linter with FlatConfigArray", () => {
                                     }
                                 }
                             }
+                        },
+                        languageOptions: {
+                            sourceType: "script"
                         },
                         rules: { "test/checker": "error" }
                     };
@@ -7523,6 +7593,9 @@ describe("Linter with FlatConfigArray", () => {
                                     }
                                 }
                             }
+                        },
+                        languageOptions: {
+                            sourceType: "script"
                         },
                         rules: { "test/checker": "error" }
                     };
